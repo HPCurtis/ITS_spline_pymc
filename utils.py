@@ -1,9 +1,87 @@
 import numpy as np
 from scipy import stats
+import arviz as az
 
 def rcspline_eval(x, knots=None, nk=5, inclx=False, knots_only=False,
                   spline_type="ordinary", norm=2, rpm=None, pc=False,
                   fractied=0.05):
+    
+    """
+    Evaluate a restricted cubic spline (RCS) basis for a given set of input values.
+
+    Parameters:
+    -----------
+    x : array-like
+        The input values for which the spline basis is to be evaluated.
+    
+    knots : array-like, optional
+        The locations of the knots. If None, knots will be automatically determined
+        based on the data in `x`.
+    
+    nk : int, optional
+        The number of knots to use when `knots` is not specified. Default is 5.
+    
+    inclx : bool, optional
+        Whether to include the original x values as the first column in the output basis.
+        Default is False.
+    
+    knots_only : bool, optional
+        If True, return only the knots without evaluating the spline basis. Default is False.
+    
+    spline_type : str, optional
+        Type of spline to use. Can be "ordinary" or "integral". Default is "ordinary".
+    
+    norm : int, optional
+        Normalization method for the spline. 
+        - 0: No normalization
+        - 1: Normalize based on the difference between the last two knots
+        - 2: Normalize based on the difference between the first and last knots raised to the power of 2/3.
+        Default is 2.
+    
+    rpm : float, optional
+        Replacement value for NaNs in `x`. If None, NaNs will be left in `x`. Default is None.
+    
+    pc : bool, optional
+        Whether to perform principal component analysis (PCA) on the spline basis. If True, the transformed
+        spline basis will be returned. Default is False.
+    
+    fractied : float, optional
+        Fraction of tied values allowed before modifying the knot placement. Should be between 0 and 1.
+        Default is 0.05.
+
+    Returns:
+    --------
+    tuple
+        If `knots_only` is False, returns a tuple (xx, knots):
+            - xx: The evaluated spline basis matrix.
+            - knots: The locations of the knots used.
+        If `knots_only` is True, returns only the knots.
+    
+    Raises:
+    -------
+    ValueError
+        If there are fewer than 6 non-missing observations in `x` when `knots` is not specified.
+        If `nk` is less than 3.
+        If fewer than 3 unique knots can be obtained.
+
+    Notes:
+    ------
+    The function automatically determines appropriate knot locations if they are not provided.
+    It ensures a minimum of 3 knots and adjusts the knot locations based on the data distribution
+    and the `fractied` parameter to handle tied values.
+
+    The evaluated spline basis can be used for regression modeling and other statistical analysis
+    where flexible, non-linear relationships are needed.
+
+    Examples:
+    ---------
+    # Example usage
+    x = np.linspace(0, 10, 100)
+    spline_basis, knots = rcspline_eval(x, nk=4)
+    
+    # Get knots only
+    knots = rcspline_eval(x, nk=4, knots_only=True)
+    """
     x = np.asarray(x)
     if knots is None:  # Knot locations unspecified
         xx = x[~np.isnan(x)]
@@ -133,3 +211,9 @@ def h(x, knots):
     combined = np.column_stack((spline_basis, sin_component, cos_component))
     
     return combined
+
+def RR_hdi_calculator(trace, hdi_prob = .95):
+    hdi = az.hdi(trace, hdi_prob=hdi_prob)
+    hdi_lower = hdi.sel(hdi="lower").beta.values
+    hdi_higher = hdi.sel(hdi="higher").beta.values
+    return np.round(np.exp(hdi_lower), 2), np.round(np.exp(hdi_higher), 2)
