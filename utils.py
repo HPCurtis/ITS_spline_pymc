@@ -198,6 +198,37 @@ def rcspline_eval(x, knots=None, nk=5, inclx=False, knots_only=False,
 
 
 def h(x, knots):
+    """
+    Combine restricted cubic spline basis with sinusoidal components for periodic data modeling.
+
+    Parameters:
+    -----------
+    x : array-like
+        Input data for which the combined features are to be computed.
+    
+    knots : array-like
+        Knot locations for the restricted cubic spline.
+
+    Returns:
+    --------
+    numpy.ndarray
+        A 2D array where each row contains the combined features for the corresponding input `x`.
+        The features include the spline basis functions, sine component, and cosine component.
+
+    Notes:
+    ------
+    - The sinusoidal components are computed with a period of 12 units, which is useful for modeling
+      periodicity in data with a yearly cycle when the units represent months.
+    - The function uses a restricted cubic spline to capture non-linear trends and augments this with
+      sinusoidal terms to model periodic behavior.
+    
+    Examples:
+    ---------
+    # Example usage with input data and knots
+    x = np.linspace(0, 24, 100)  # Example data
+    knots = [4, 8, 16, 20]       # Example knots
+    combined_features = h(x, knots)
+    """
     
     x = np.asarray(x)
     
@@ -244,7 +275,7 @@ def RR_hdi_calculator(trace, hdi_prob = .95):
     lower, upper = RR_hdi_calculator(trace, hdi_prob=0.95)
     print(f"95% HDI for the relative risk: [{lower}, {upper}]")
     """
-    
+
     hdi = az.hdi(trace, hdi_prob=hdi_prob)
     hdi_lower = hdi.sel(hdi="lower").beta.values
     hdi_higher = hdi.sel(hdi="higher").beta.values
