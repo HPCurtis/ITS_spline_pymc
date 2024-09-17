@@ -198,6 +198,7 @@ def rcspline_eval(x, knots=None, nk=5, inclx=False, knots_only=False,
 
 
 def h(x, knots):
+    
     x = np.asarray(x)
     
     # Evaluate restricted cubic spline
@@ -213,6 +214,37 @@ def h(x, knots):
     return combined
 
 def RR_hdi_calculator(trace, hdi_prob = .95):
+    """
+    Calculate the Relative Risk (RR) Highest Density Interval (HDI) for a given posterior trace.
+
+    Parameters:
+    -----------
+    trace : xarray.Dataset or arviz.InferenceData
+        The posterior trace of the parameter(s) of interest. This should be an object compatible
+        with ArviZ, containing samples from the posterior distribution.
+    
+    hdi_prob : float, optional
+        The probability mass to include in the HDI. Default is 0.95, indicating a 95% HDI.
+
+    Returns:
+    --------
+    tuple of floats
+        A tuple containing the exponentiated lower and upper bounds of the HDI for the parameter `beta`.
+        The values are rounded to two decimal places.
+
+    Notes:
+    ------
+    This function assumes that the parameter of interest is named `beta` within the trace. It computes
+    the HDI for this parameter, transforms the bounds to the relative risk scale using the exponential
+    function, and then rounds the results to two decimal places.
+    
+    Examples:
+    ---------
+    # Example usage with a posterior trace
+    lower, upper = RR_hdi_calculator(trace, hdi_prob=0.95)
+    print(f"95% HDI for the relative risk: [{lower}, {upper}]")
+    """
+    
     hdi = az.hdi(trace, hdi_prob=hdi_prob)
     hdi_lower = hdi.sel(hdi="lower").beta.values
     hdi_higher = hdi.sel(hdi="higher").beta.values
