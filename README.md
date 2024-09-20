@@ -1,4 +1,4 @@
-Interupted timseries analysis using Restricted Cubic Splines in PyMC
+interrupted timseries analysis using Restricted Cubic Splines in PyMC
 
 ## File structure
 - README.md: The file your reading right now.
